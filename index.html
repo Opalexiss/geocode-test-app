@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>Geocode Test App</title>
-    <meta name="description" content="A simple application to test sending CSV data to Geocode.io's API and perform test cases">
+    <meta name="description" content="A simple application to test sending CSV data to geocod.io's API and perform test cases">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <meta property="og:title" content="Geocode Test App">
@@ -25,7 +25,7 @@
         <h1>Geocode Test App</h1>
     </div>
     <div class="main-block" id="blockStep1">
-        <h3>Step 1. Load addresses from CSV and send to Geocode.io</h3>
+        <h3>Step 1. Load addresses from CSV and send to geocod.io</h3>
         <form action="javascript:void(0);">
             <input type="hidden" id="appDebugMode" name="appDebugMode" value="1" />
             <div class="info">
@@ -42,7 +42,7 @@
     </div>
 
     <div style="display: none;" class="main-block" id="blockStep2">
-        <h3>Step 2. Wait for Geocode.io to process data and fetch results</h3>
+        <h3>Step 2. Wait for geocod.io to process data and fetch results</h3>
         <form action="javascript:void(0);">
             <table id="csvResultsTable" class="dtable stripe" style="width: 100%">
                 <thead>
@@ -113,7 +113,7 @@
             addressArray: []
         };
 
-        // This Geocode.io API key belongs to Lenora Chase
+        // This geocod.io API key belongs to Lenora Chase
         const geocodio_api_key = '06f69a9993d3f3a939cc6d3f6d9a6a9f13e116c';
         const geocodio_endpoint = 'https://api.geocod.io/v1.7/';
 
@@ -127,7 +127,7 @@
             /*
              * When the Submit CSV Data button is clicked, this will parse the selected file into JSON and
              * display the results in Step 2's DataTable. @todo: Implement checkboxes to allow for individual address selection.
-             * After the table has been populate, an API call to Geocode.io's LISTS endpoint will be made for list creation.
+             * After the table has been populate, an API call to geocod.io's LISTS endpoint will be made for list creation.
              * The returned List ID will be stored in appData for use with the Get Status button.
              * 
              * Assumption: The CSV is correctly formatted with 6 columns containing valid data that matches the form description.
@@ -403,7 +403,7 @@
                              * newly downloaded data. To do this, we will locate matches based on address_1,
                              * city, and zip code.
                              * 
-                             * The returned address cell from Geocode.io is a little funky though:
+                             * The returned address cell from geocod.io is a little funky though:
                              * "268 S. State St. ""Salt Lake City"" ""UT"" 84111 ""Celtic Bank"""
                              * 
                              * So we'll split on double quotes and trim up the chunks so they're ready for
@@ -489,7 +489,7 @@
                         var strLink = "";
                         var strLat = "";
                         var strLng = "";
-                        var strLabel = '<a class="noLink" href="javascript:void(0)" data-title="Geocode.io was not able to geocode this address.">' +
+                        var strLabel = '<a class="noLink" href="javascript:void(0)" data-title="geocod.io was not able to geocode this address.">' +
                             '<span class="geoError"><i class="fas fa-exclamation-triangle"></i></span>&nbsp;' +
                             appData.addressArray[i].label + '</a>';
                     }
