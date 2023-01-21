@@ -19,7 +19,7 @@ Debug mode will provide verbose status messages and payload data in the browser'
 
 When the **Get List Status** button is clicked, the app will check a hidden input field for the flag that is set upload HTML load/reload. This flag is usually set to 1. 
 
-Debug mode can be changed at *any time* by calling these functions from the browser's console.
+Debug mode can be changed at *any time* by calling these functions from the browser's console. Please note that if you do this, the setting **will** persist through page loads. This is because browsers will populate form fields with their previous values.
 
 ```
 enableDebuggingMode();
