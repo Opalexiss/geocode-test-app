@@ -87,7 +87,9 @@
     </div>
 
     <div class="main-block">
-        <div id="app-footer" style="font-size: 12px !important;">Geocode Test App version Jan.20.2023 by Lenora Chase.</div>
+        <div id="app-footer" style="font-size: 12px !important;">Geocode Test App version Jan.20.2023 by Lenora Chase.
+            <span id="debugModeStatus" style="display: none; color: #049c87">&nbsp;Debug mode enabled.</span>
+        </div>
     </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -117,6 +119,27 @@
         const geocodio_api_key = '06f69a9993d3f3a939cc6d3f6d9a6a9f13e116c';
         const geocodio_endpoint = 'https://api.geocod.io/v1.7/';
 
+        function enableDebuggingMode() {
+            $('#appDebugMode').val(1);
+            appData.debugMode = 1;
+            $('#debugModeStatus').show();
+            console.log("Debugging mode enabled");
+            return true;
+        }
+
+        function disableDebuggingMode() {
+            $('#appDebugMode').val(0);
+            appData.debugMode = 0;
+            $('#debugModeStatus').hide();
+            console.log("Debugging mode disabled");
+            return true;
+        }
+
+        function displayAppData() {
+            console.log(appData);
+            return true;
+        }
+
         $(document).ready(function() {
             // Initialization of DataTables
             $('.dtable').DataTable();
@@ -145,10 +168,11 @@
                 displayLoadingIcon();
                 $('#csvUpload').prop("disabled", true);
 
+                console.log($('#appDebugMode').val());
+
                 if ($('#appDebugMode').val() == 1) {
                     appData.debugMode = 1;
-                    var strDebug = '&nbsp;<span style="color: #049c87">Debug mode enabled.</span>';
-                    $('#app-footer').append(strDebug);
+                    $('#debugModeStatus').show();
                 }
 
                 var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;

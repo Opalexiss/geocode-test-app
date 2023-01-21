@@ -13,6 +13,29 @@ D[Download completed data]-->E[Process results];
 E[Process results]-->F[Display results in a table]
 ```
 
+## App Debug Mode
+
+Debug mode will provide verbose status messages and payload data in the browser's console after API calls and other functions have been executed. Any errors will be routed to the console as well. When debug mode is disabled, errors will be displayed using alerts instead.
+
+When the **Get List Status** button is clicked, the app will check a hidden input field for the flag that is set upload HTML load/reload. This flag is usually set to 1. 
+
+Debug mode can be changed at *any time* by calling these functions from the browser's console.
+
+```
+enableDebuggingMode();
+```
+and
+```
+disableDebuggingMode();
+```
+
+Regardless of whether debug mode is enabled or not, you can have the app dump its full appData configuration object and address collection data into the console at any time by calling this function:
+```
+displayAppData();
+```
+
+----
+
 ### Step 1. Load addresses from CSV and send to geocod.io
 
 Start with a .csv containing some locations to check. The csv must comma-delimited, without any of the fields wrapped in quotes. Quotes will not be stripped from the data and will cause problems with the data that is returned from geocod.io. Do not include a header row, only the addresses to be looked up.
@@ -38,7 +61,7 @@ Once you have selected your CSV file, you can then click the **Submit CSV Data a
 ### Step 2. Wait for geocod.io to process data and fetch results
 
 1. The app will process the CSV file and build its internal collection of addresses, preparing them to send to geocod.io.
-2. The hidden **#appDebugMode** input will be checked. If its value == 1, the app's debug mode will be enabled (displaying a message in the footer). Debug mode will provide verbose status messages and payload data in the browser's console.
+2. The hidden **#appDebugMode** input will be checked. If its value == 1, the app's debug mode will be enabled (displaying a message in the footer).
 3. The app will call geocode.io's LISTS endpoint and supply all of the loaded addresses as a single list for processing. geocod.io will return a List ID.
 4. These addresses will also be displayed in a table for reference.
 
