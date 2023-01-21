@@ -27,17 +27,17 @@
     <div class="main-block" id="blockStep1">
         <h3>Step 1. Load addresses from CSV and send to geocod.io</h3>
         <form action="javascript:void(0);">
-            <input type="hidden" id="appDebugMode" name="appDebugMode" value="1" />
+            <input type="hidden" data-cy="appDebugMode" id="appDebugMode" name="appDebugMode" value="1" />
             <div class="info">
                 <div class="info-item">
                     Please select a CSV file with addresses in the following format: Label, Address 1, Address 2, City, State, Zip.
                 </div>
                 <div class="info-item">
                     <label class="icon" for="csvUpload"><i class="fas fa-file-csv"></i></label>
-                    <input type="file" name="csvUpload" id="csvUpload" accept=".csv" required/>
+                    <input type="file" name="csvUpload" data-cy="csvUpload" id="csvUpload" accept=".csv" required/>
                 </div>
             </div>
-            <button href="javascript:void(0);" id="btnListSubmit"></i> Submit CSV Data and Send Request</button>
+            <button href="javascript:void(0);" data-cy="btnListSubmit" id="btnListSubmit"></i> Submit CSV Data and Send Request</button>
         </form>
     </div>
 
@@ -60,7 +60,7 @@
 
                 </tbody>
             </table>
-            <button id="btnListStatus" href="javascript:void(0);">Get List Status and Display Results</button>
+            <button id="btnListStatus" data-cy="btnListStatus" href="javascript:void(0);">Get List Status and Display Results</button>
         </form>
     </div>
 
@@ -87,7 +87,8 @@
     </div>
 
     <div class="main-block">
-        <div id="app-footer" style="font-size: 12px !important;">Geocode Test App version Jan.20.2023 by Lenora Chase.
+        <div id="app-footer" style="font-size: 12px !important;">Geocode Test App version Jan.20.2023 by Lenora Chase. Check out the README in the
+            <a target="_blank" href="https://github.com/Opalexiss/geocode-test-app">Github repo</a>.
             <span id="debugModeStatus" style="display: none; color: #049c87">&nbsp;Debug mode enabled.</span>
         </div>
     </div>
@@ -119,25 +120,37 @@
         const geocodio_api_key = '06f69a9993d3f3a939cc6d3f6d9a6a9f13e116c';
         const geocodio_endpoint = 'https://api.geocod.io/v1.7/';
 
+        /*
+         * enableDebuggingMode()
+         *
+         * This is a function exposed to the console for manually enabling debug mode
+         */
         function enableDebuggingMode() {
             $('#appDebugMode').val(1);
             appData.debugMode = 1;
             $('#debugModeStatus').show();
-            console.log("Debugging mode enabled");
-            return true;
+            return "Debugging mode enabled";
         }
 
+        /*
+         * disableDebuggingMode()
+         *
+         * This is a function exposed to the console for manually disabling debug mode
+         */
         function disableDebuggingMode() {
             $('#appDebugMode').val(0);
             appData.debugMode = 0;
             $('#debugModeStatus').hide();
-            console.log("Debugging mode disabled");
-            return true;
+            return "Debugging mode disabled";
         }
 
+        /*
+         * displayAppData()
+         *
+         * This is a function exposed to the console for returning the appData object
+         */
         function displayAppData() {
-            console.log(appData);
-            return true;
+            return appData;
         }
 
         $(document).ready(function() {
@@ -148,6 +161,8 @@
             $('#csvUpload').val('');
 
             /*
+             * "Submit CSV Data and Send Request" button click
+             *
              * When the Submit CSV Data button is clicked, this will parse the selected file into JSON and
              * display the results in Step 2's DataTable. @todo: Implement checkboxes to allow for individual address selection.
              * After the table has been populate, an API call to geocod.io's LISTS endpoint will be made for list creation.
@@ -164,27 +179,40 @@
              */
             $("#btnListSubmit").bind("click", function(e) {
                 e.preventDefault();
+
+                // Prevent clicking the buttons while we're processing
                 $(this).prop("disabled", true);
-                displayLoadingIcon();
                 $('#csvUpload').prop("disabled", true);
+                displayLoadingIcon();
 
-                console.log($('#appDebugMode').val());
-
+                // If debug mode isn't manually set by this point, we'll go with whatever value is hardcoded in the hidden input
                 if ($('#appDebugMode').val() == 1) {
                     appData.debugMode = 1;
                     $('#debugModeStatus').show();
                 }
 
+                // Make sure the file has a .csv or .txt extension before touching it
                 var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;
-
                 if (regex.test($("#csvUpload").val().toLowerCase())) {
+                    /*
+                     * File input control detection
+                     *
+                     * Modernizr version:
+                     * if (Modernizr.fileinput) {
+                     *
+                     * We'll do it natively instead for this demo, to reduce dependencies
+                     */
                     if (typeof(FileReader) != "undefined") {
                         var reader = new FileReader();
                         reader.onload = function(e) {
+
+                            // One row per line. aka separate data by line breaks
                             var rows = e.target.result.split("\n");
                             debugMessage("Importing " + rows.length + " row(s)", 1);
 
                             for (var i = 0; i < rows.length; i++) {
+
+                                // This is the address object we'll be using for the full app cycle
                                 var newAddress = {
                                     label: "",
                                     address_1: "",
@@ -200,23 +228,27 @@
                                     link: ""
                                 }
 
+                                // Separate this row's fields by comma
                                 var cells = rows[i].split(",");
                                 rawIndex = appData.addressCount;
                                 var cellIndex = 0;
 
-                                // iterate through the fields in this row and store the values in the new var
+                                // Iterate through the fields in this row and store the values in newAddress
                                 $.each(newAddress, function(k, v) {
                                     newAddress[k] = cells[cellIndex];
                                     cellIndex++;
+                                    // We are only interested in the fields available in the CSV
                                     if (cellIndex > 5) {
                                         return false;
                                     }
                                 });
 
+                                // Save the newAddress in our appData and proceed to the next row
                                 appData.addressArray.push(newAddress);
                                 appData.addressCount++;
                             }
 
+                            // 
                             appData.csvParsePerformed = 1;
 
                             // Only perform the table update and API call if at least 1 address was loaded.
@@ -239,6 +271,12 @@
                 }
             });
 
+            /*
+             * populateAddressTable()
+             *
+             * Loads all of the CSV-imported addresses into Step 2's table and then
+             * makes the initial API call to geocod.io
+             */
             function populateAddressTable() {
 
                 appData.stepIndex = 2;
@@ -258,10 +296,15 @@
                 sendGeoData();
             }
 
+            /*
+             * sendGeoData()
+             *
+             * Prepares an address list and sends it to geocod.io through their Lists endpoint
+             */
             function sendGeoData() {
 
+                // First we prepare a string of addresses using geocod.io's requested format
                 var strAddresses = "Address City State Zip Label\n";
-
                 for (var i = 0; i < appData.addressArray.length; i++) {
                     strAddresses += '"' + appData.addressArray[i].address_1 + '" ';
                     strAddresses += '"' + appData.addressArray[i].city + '" ';
@@ -272,6 +315,7 @@
 
                 debugMessage(strAddresses, 1);
 
+                // Set up the payload with geocode.io's additional options
                 var payload = {
                     file: strAddresses,
                     filename: appData.listFilename,
@@ -284,8 +328,10 @@
                     type: "POST",
                     data: payload
                 }).then(
+                    // geocode.io responded successfully
                     function(response) {
                         if (typeof response.id != 'undefined') {
+                            // the response contains a List ID, which we are expecting
                             appData.listID = response.id;
                             appData.sendRequestPerformed = 1;
                             debugMessage("Send geo data success", 1);
@@ -306,9 +352,13 @@
             }
 
             /*
+             * debugMessage(strMessage, debugOnly = 0)
+             *
              * Depending on whether the app is in debug mode or not,
              * messages will be displayed to the user in an alert, or routed to the console
              * and any third-party automation functions.
+             * 
+             * If the debugOnly flag is set to 1, then the message will be ignored except in debug mode
              */
             function debugMessage(strMessage, debugOnly = 0) {
                 if (appData.debugMode == 1) {
@@ -320,8 +370,16 @@
                 }
             }
 
+            /*
+             * displayLoadingIcon(varStep = 1)
+             *
+             * Sets a button (Step 1's by default) to display a loading messaged and animated spinner
+             * 
+             * If Step 2's button is set here, but geocod.io isn't finished processing the list,
+             * then getGeoStatus() will update the button text so this function can be called again on
+             * the next button click.
+             */
             function displayLoadingIcon(varStep = 1) {
-
                 var strLoading = '<i class="fas fa-spinner fa-spin"></i> Working...';
                 if (varStep == 1) {
                     $('#btnListSubmit').html(strLoading);
@@ -330,14 +388,26 @@
                 }
             }
 
+            /*
+             * finalState()
+             *
+             * We're all done here, nothing more to see!
+             */
             function finalState() {
-
                 $('#blockStep2').fadeOut('fast', function() {
                     $('#blockStep3').fadeIn('fast');
                     debugMessage("App logic complete", 1);
                 });
             }
 
+            /*
+             * "Get List Status and Display Results" button click
+             *
+             * When Step 2's button is clicked, we'll disable it and display a loading message
+             * so it cannot be clicked again while we're in the middle of processing.
+             * 
+             * Next, we'll run getGeoStatus() to check on geocod.io's progress with the list
+             */
             $("#btnListStatus").bind("click", function(e) {
                 e.preventDefault();
                 $(this).prop("disabled", true);
@@ -345,6 +415,16 @@
                 getGeoStatus();
             });
 
+            /*
+             * getGeoStatus()
+             *
+             * Using the List ID given to us in the first API call, we'll query the Lists endpoing for a status update.
+             * 
+             * If processing is not complete, the button text will be updated with a status message and approximate time remaining,
+             * then will return to a ready (not disabled) state.
+             * 
+             * If processing is complete, we'll proceed to the next step - downloadGeoData()
+             */
             function getGeoStatus() {
                 if (appData.listID > 0) {
                     $.ajax({
@@ -367,7 +447,7 @@
                                         // proceed with results processing
                                         downloadGeoData();
                                     } else {
-                                        // reset button to usable state
+                                        // reset button to usable state and display geocode.io's approximate time remaining message
                                         $('#btnListStatus').html('The List is Still Processing, Please Try Again. Message: ' + geoStatus.time_left_description);
                                         $('#btnListStatus').prop("disabled", false);
                                     }
@@ -388,6 +468,14 @@
                 }
             }
 
+            /*
+             * downloadGeoData()
+             *
+             * Since list processing is complete, we can download the results from geocod.io and send it to
+             * processDownloadedData(strResponse) for processing.
+             * 
+             * This is done in its own function to follow separation of concern best practices
+             */
             function downloadGeoData() {
 
                 $.ajax({
@@ -406,6 +494,16 @@
                 );
             }
 
+            /*
+             * processDownloadedData(strResponse)
+             *
+             * With the results from geocod.io, we'll iterate through everything and store three fields:
+             * Latitude, Longitude, and Accuracy into their corresponding addresses from our existing collection
+             * 
+             * If geocoding has been resolved (which we'll also store), a link for Google Maps will also be created.
+             * 
+             * Once this process is complete, we can move on to populateResultsTable()
+             */
             function processDownloadedData(strResponse) {
 
                 var rows = strResponse.split("\n");
@@ -439,6 +537,19 @@
                             var miniPostal = $.trim(miniCells[4]);
                             var resIndexCheck = 0;
 
+                            /*
+                             * Let's use address_1, city, and postal to find a match in our own collection
+                             * 
+                             * We *could* just use the index and assume that geocod.io will always return everything we
+                             * sent them, and in the same exact order. Then we wouldn't have to match anything.
+                             * But, then we would be basing our logic on an assumption. What if geocod.io omits an address
+                             * or returns them out of order? Since we cannot examine their code, we should not assume anything.
+                             * 
+                             * This particular matching routine is being used because this app demo only expects
+                             * a handful of addresses in the supplied CSV. At a larger scale, and for real world use,
+                             * we would do something different and much more efficient. But to keep it simple, this
+                             * works for now.
+                             */
                             $.each(appData.addressArray, function(va, ke) {
                                 if ((ke.address_1 == miniAddress1) &&
                                     (ke.city == miniCity) &&
@@ -452,7 +563,13 @@
                         } else {
                             if (foundResult == 1) {
                                 /*
-                                 * we know the cell indices of the three fields we are interested in
+                                 * Since we know the cells containing the three fields we are interested in,
+                                 * we will use those and ignore the rest.
+                                 * 
+                                 * Again, this logic assumes the user-supplied CSV will only ever contain a handful
+                                 * of addresses. For larger scales, we would do this differently. Instead of iterating through
+                                 * every cell in geocod.io's results rows, we would only ever scan the cells we are interested in.
+                                 * Trimming out the unneeded cells from examination will cut down on processing time at scale.
                                  */
                                 switch (cellIndex) {
                                     case 1:
@@ -480,6 +597,7 @@
                     curIndex++;
                 }
 
+                // The results have been processed, now we can get everything displayed in the final table
                 appData.listDownloaded = 1;
                 appData.resolvedCount = resolvedAddresses;
 
@@ -494,6 +612,14 @@
                 populateResultsTable();
             }
 
+            /*
+             * populateResultsTable()
+             *
+             * No parameter is needed since everything we need is stored in appData's addressArray.
+             * 
+             * This will iterate through each address and display everything neatly in the table.
+             * If an address is unresolved, we'll add an error icon with a tooltip and leave the lag/lng/link columns blank.
+             */
             function populateResultsTable() {
 
                 appData.stepIndex = 3;
@@ -528,6 +654,15 @@
                         strLink
                     ]).draw(false);
                 }
+
+                /*
+                 * The table has been rendered with geocod.io's results, thus concluding the app instance's logic cycle.
+                 * finalState() will put the app in its finished state, displaying a final message in the console if in
+                 * debugging mode.
+                 * 
+                 * For a real world app, there would probably be a button added to process another CSV file (and reinitialize
+                 * appData) so the user doesn't have to refresh the page to start over.
+                 */
                 finalState();
             }
 

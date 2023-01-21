@@ -12,6 +12,7 @@ C[Check processing status]-->D[Download completed data];
 D[Download completed data]-->E[Process results];
 E[Process results]-->F[Display results in a table]
 ```
+*Pro tip: All of the JS code in index.html is very well-documented!*
 
 ## App Debug Mode
 
@@ -19,7 +20,7 @@ Debug mode will provide verbose status messages and payload data in the browser'
 
 When the **Get List Status** button is clicked, the app will check a hidden input field for the flag that is set upload HTML load/reload. This flag is usually set to 1. 
 
-Debug mode can be changed at *any time* by calling these functions from the browser's console. Please note that if you do this, the setting **will** persist through page loads. This is because browsers will populate form fields with their previous values.
+Debug mode can be changed at *any time* by calling these functions from the browser's console. If you manually enable/disable debugging, then that setting will persist through page reloads. Otherwise, the default setting will follow what is set in the hidden input.
 
 ```
 enableDebuggingMode();
@@ -79,4 +80,18 @@ You can now click the **Get List Status and Display Results** button.
 
 If debug mode is enabled, the full appData object will be dumped to the console, allowing you to view config fields and each address record in its entirety.
 
-*Created by Lenora Chase*
+----
+
+## Dependencies
+
+While the core logic is written in pure JS/HTML (no templating or frameworks), several libraries are used for enhnaced viewing and QoL improvements.
+
+* **jQuery** - Used to simplify ajax calls/error handling, array iteration, and tidy up strings. The code can be refactored to omit its usage and would still work in the same way.
+* **DataTables** - For prettier tables with extra functionality such as pagination, search, and column sorting. The app's code handles writing data to the tables before they are rendered by this library.
+* **Modernizr** - This can be used to detect whether the browser supports the native HTML 5 file input/upload control, and was added for this reason. However, the app is currently performing this check on its own for demonstration purposes.
+* **FontAwesome** - Icons and button loading animations.
+* **Google Fonts** - For the Roboto, Arial, sans-serif font family.
+
+----
+
+*Geocode Test App created by Lenora Chase on Jan 20th, 2023. Automated tests added Jan 21st.*
