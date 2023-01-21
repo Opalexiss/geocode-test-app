@@ -1,0 +1,514 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+    <meta charset="utf-8">
+    <title>Geocode Test App</title>
+    <meta name="description" content="A simple application to test sending CSV data to Geocode.io's API and perform test cases">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta property="og:title" content="Geocode Test App">
+    <meta name="theme-color" content="#fafafa">
+
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css" integrity="sha384-5sAR7xN1Nv6T6+dT2mhtzEpVJvfS3NScPQTrOxhwjIuvcA67KV2R5Jz6kr4abQsz" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/dt.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body>
+
+    <div class="main-block">
+        <h1>Geocode Test App</h1>
+    </div>
+    <div class="main-block" id="blockStep1">
+        <h3>Step 1. Load addresses from CSV and send to Geocode.io</h3>
+        <form action="javascript:void(0);">
+            <input type="hidden" id="appDebugMode" name="appDebugMode" value="1" />
+            <div class="info">
+                <div class="info-item">
+                    Please select a CSV file with addresses in the following format: Label, Address 1, Address 2, City, State, Zip.
+                </div>
+                <div class="info-item">
+                    <label class="icon" for="csvUpload"><i class="fas fa-file-csv"></i></label>
+                    <input type="file" name="csvUpload" id="csvUpload" accept=".csv" required/>
+                </div>
+            </div>
+            <button href="javascript:void(0);" id="btnListSubmit"></i> Submit CSV Data and Send Request</button>
+        </form>
+    </div>
+
+    <div style="display: none;" class="main-block" id="blockStep2">
+        <h3>Step 2. Wait for Geocode.io to process data and fetch results</h3>
+        <form action="javascript:void(0);">
+            <table id="csvResultsTable" class="dtable stripe" style="width: 100%">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <td>Label</td>
+                        <td>Address 1</td>
+                        <td>Address 2</td>
+                        <td>City</td>
+                        <td>State</td>
+                        <td>Zip</td>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+            <button id="btnListStatus" href="javascript:void(0);">Get List Status and Display Results</button>
+        </form>
+    </div>
+
+    <div style="display: none;" class="main-block" id="blockStep3">
+        <h3>Step 3. View geocoded address results</h3>
+        <form action="javascript:void(0);">
+            <table id="geoResultsTable" class="dtable stripe" style="width: 100%">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <td>Label</td>
+                        <td>Address</td>
+                        <td>Latitude</td>
+                        <td>Longitude</td>
+                        <td>Accuracy</td>
+                        <td>Link</td>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </form>
+    </div>
+
+    <div class="main-block">
+        <div id="app-footer" style="font-size: 12px !important;">Geocode Test App version Jan.20.2023 by Lenora Chase.</div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script src="js/vendor/modernizr-3.11.2.min.js"></script>
+    <script src="js/plugins.js"></script>
+
+    <script type="text/javascript">
+        // The full application state is stored in appData, with an array for address data
+        var appData = {
+            debugMode: 0,
+            stepIndex: 1,
+            listID: 0,
+            listFilename: "geolist.csv",
+            addressCount: 0,
+            resolvedCount: 0,
+            csvParsePerformed: 0,
+            sendRequestPerformed: 0,
+            getStatusPerformed: 0,
+            listDownloaded: 0,
+            listStatus: "pending",
+            listDownloadUrl: "",
+            addressArray: []
+        };
+
+        // This Geocode.io API key belongs to Lenora Chase
+        const geocodio_api_key = '06f69a9993d3f3a939cc6d3f6d9a6a9f13e116c';
+        const geocodio_endpoint = 'https://api.geocod.io/v1.7/';
+
+        $(document).ready(function() {
+            // Initialization of DataTables
+            $('.dtable').DataTable();
+
+            // Reset file upload control on page load/refresh
+            $('#csvUpload').val('');
+
+            /*
+             * When the Submit CSV Data button is clicked, this will parse the selected file into JSON and
+             * display the results in Step 2's DataTable. @todo: Implement checkboxes to allow for individual address selection.
+             * After the table has been populate, an API call to Geocode.io's LISTS endpoint will be made for list creation.
+             * The returned List ID will be stored in appData for use with the Get Status button.
+             * 
+             * Assumption: The CSV is correctly formatted with 6 columns containing valid data that matches the form description.
+             * 
+             * When this event is fired, the appDebugMode input will be checked and set, for external toggling of debugging functions.
+             * 
+             * Possible errors:
+             *      - The browser does not support HTML 5's file upload control
+             *      - The file is not a valid text/csv file.
+             *      - The CSV file does not have 6 fields for every row
+             */
+            $("#btnListSubmit").bind("click", function(e) {
+                e.preventDefault();
+                $(this).prop("disabled", true);
+                displayLoadingIcon();
+                $('#csvUpload').prop("disabled", true);
+
+                if ($('#appDebugMode').val() == 1) {
+                    appData.debugMode = 1;
+                    var strDebug = '&nbsp;<span style="color: #049c87">Debug mode enabled.</span>';
+                    $('#app-footer').append(strDebug);
+                }
+
+                var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;
+
+                if (regex.test($("#csvUpload").val().toLowerCase())) {
+                    if (typeof(FileReader) != "undefined") {
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            var rows = e.target.result.split("\n");
+                            debugMessage("Importing " + rows.length + " row(s)", 1);
+
+                            for (var i = 0; i < rows.length; i++) {
+                                var newAddress = {
+                                    label: "",
+                                    address_1: "",
+                                    address_2: "",
+                                    city: "",
+                                    state: "",
+                                    postal: "",
+                                    enabled: 1,
+                                    resolved: 0,
+                                    lat: "",
+                                    lng: "",
+                                    accuracy: "",
+                                    link: ""
+                                }
+
+                                var cells = rows[i].split(",");
+                                rawIndex = appData.addressCount;
+                                var cellIndex = 0;
+
+                                // iterate through the fields in this row and store the values in the new var
+                                $.each(newAddress, function(k, v) {
+                                    newAddress[k] = cells[cellIndex];
+                                    cellIndex++;
+                                    if (cellIndex > 5) {
+                                        return false;
+                                    }
+                                });
+
+                                appData.addressArray.push(newAddress);
+                                appData.addressCount++;
+                            }
+
+                            appData.csvParsePerformed = 1;
+
+                            // Only perform the table update and API call if at least 1 address was loaded.
+                            if (appData.addressCount > 0) {
+                                debugMessage("Import success", 1);
+                                populateAddressTable();
+                            } else {
+                                debugMessage("Import failure", 1);
+                                debugMessage("No addresses were imported");
+                            }
+                        }
+                        reader.readAsText($("#csvUpload")[0].files[0]);
+                    } else {
+                        debugMessage("Import failure", 1);
+                        debugMessage("This browser does not support HTML 5");
+                    }
+                } else {
+                    debugMessage("Import failure", 1);
+                    debugMessage("Please upload a valid CSV file");
+                }
+            });
+
+            function populateAddressTable() {
+
+                appData.stepIndex = 2;
+                var dt = $('#csvResultsTable').DataTable();
+
+                for (var i = 0; i < appData.addressCount; i++) {
+                    dt.row.add([
+                        i + 1,
+                        appData.addressArray[i].label,
+                        appData.addressArray[i].address_1,
+                        appData.addressArray[i].address_2,
+                        appData.addressArray[i].city,
+                        appData.addressArray[i].state,
+                        appData.addressArray[i].postal
+                    ]).draw(false);
+                }
+                sendGeoData();
+            }
+
+            function sendGeoData() {
+
+                var strAddresses = "Address City State Zip Label\n";
+
+                for (var i = 0; i < appData.addressArray.length; i++) {
+                    strAddresses += '"' + appData.addressArray[i].address_1 + '" ';
+                    strAddresses += '"' + appData.addressArray[i].city + '" ';
+                    strAddresses += '"' + appData.addressArray[i].state + '" ';
+                    strAddresses += appData.addressArray[i].postal + ' ';
+                    strAddresses += '"' + appData.addressArray[i].label + '"' + "\n";
+                }
+
+                debugMessage(strAddresses, 1);
+
+                var payload = {
+                    file: strAddresses,
+                    filename: appData.listFilename,
+                    direction: "forward",
+                    format: "{{A}} {{B}} {{C}} {{D}}"
+                };
+
+                $.ajax({
+                    url: geocodio_endpoint + "lists?api_key=" + geocodio_api_key,
+                    type: "POST",
+                    data: payload
+                }).then(
+                    function(response) {
+                        if (typeof response.id != 'undefined') {
+                            appData.listID = response.id;
+                            appData.sendRequestPerformed = 1;
+                            debugMessage("Send geo data success", 1);
+                            debugMessage("List ID - " + appData.listID, 1);
+                            $('#blockStep1').fadeOut('fast', function() {
+                                $('#blockStep2').fadeIn('fast');
+                            });
+                        } else {
+                            debugMessage("Send geo data failure, 1");
+                            debugMessage("Missing List ID from response");
+                            debugMessage(response, 1);
+                        }
+                    },
+                    function() {
+                        debugMessage("Send geo data failure");
+                    }
+                );
+            }
+
+            /*
+             * Depending on whether the app is in debug mode or not,
+             * messages will be displayed to the user in an alert, or routed to the console
+             * and any third-party automation functions.
+             */
+            function debugMessage(strMessage, debugOnly = 0) {
+                if (appData.debugMode == 1) {
+                    console.log(strMessage);
+                } else {
+                    if (debugOnly == 0) {
+                        alert(strMessage);
+                    }
+                }
+            }
+
+            function displayLoadingIcon(varStep = 1) {
+
+                var strLoading = '<i class="fas fa-spinner fa-spin"></i> Working...';
+                if (varStep == 1) {
+                    $('#btnListSubmit').html(strLoading);
+                } else {
+                    $('#btnListStatus').html(strLoading);
+                }
+            }
+
+            function finalState() {
+
+                $('#blockStep2').fadeOut('fast', function() {
+                    $('#blockStep3').fadeIn('fast');
+                    debugMessage("App logic complete", 1);
+                });
+            }
+
+            $("#btnListStatus").bind("click", function(e) {
+                e.preventDefault();
+                $(this).prop("disabled", true);
+                displayLoadingIcon(2);
+                getGeoStatus();
+            });
+
+            function getGeoStatus() {
+                if (appData.listID > 0) {
+                    $.ajax({
+                        url: geocodio_endpoint + "lists/" + appData.listID + "?api_key=" + geocodio_api_key,
+                        type: "GET"
+                    }).then(
+                        function(response) {
+                            if (typeof response.id != 'undefined') {
+                                appData.listID = response.id;
+                                appData.getStatusPerformed = 1;
+                                debugMessage("Get geo list update success", 1);
+
+                                if (typeof response.status != 'undefined') {
+                                    var geoStatus = response.status;
+                                    if (geoStatus.state == "COMPLETED") {
+                                        if (typeof response.download_url != 'undefined') {
+                                            appData.listDownloadUrl = response.download_url;
+                                            appData.listStatus = "ready";
+                                        }
+                                        // proceed with results processing
+                                        downloadGeoData();
+                                    } else {
+                                        // reset button to usable state
+                                        $('#btnListStatus').html('The List is Still Processing, Please Try Again. Message: ' + geoStatus.time_left_description);
+                                        $('#btnListStatus').prop("disabled", false);
+                                    }
+                                }
+                            } else {
+                                debugMessage("Get geo list update failure", 1);
+                                debugMessage("Missing List ID from response");
+                                debugMessage(response, 1);
+                            }
+                        },
+                        function() {
+                            debugMessage("Get geo list update failure");
+                        }
+                    );
+                } else {
+                    debugMessage("Get geo list update failure", 1);
+                    debugMessage("There is not a pending list for this app instance");
+                }
+            }
+
+            function downloadGeoData() {
+
+                $.ajax({
+                    url: geocodio_endpoint + "lists/" + appData.listID + "/download?api_key=" + geocodio_api_key,
+                    type: "get"
+                }).then(
+                    function(response) {
+                        debugMessage("Download geo list success", 1);
+                        debugMessage(response, 1);
+                        appData.listStatus = "downloaded";
+                        processDownloadedData(response);
+                    },
+                    function() {
+                        debugMessage("Download geo list failure");
+                    }
+                );
+            }
+
+            function processDownloadedData(strResponse) {
+
+                var rows = strResponse.split("\n");
+                var curIndex = 0;
+                var resolvedAddresses = 0;
+                debugMessage("Parsing " + (rows.length - 2) + " row(s)", 1);
+
+                for (var i = 1; i < rows.length; i++) {
+                    var cells = rows[i].split(",");
+                    var cellIndex = 0;
+                    var resultIndex = 0;
+                    var foundResult = 0;
+
+                    for (var x = 0; x < cells.length; x++) {
+                        var k = cells[x];
+                        if (cellIndex == 0) {
+                            /*
+                             * We are going to use the existing array of addresses and perform updates with the
+                             * newly downloaded data. To do this, we will locate matches based on address_1,
+                             * city, and zip code.
+                             * 
+                             * The returned address cell from Geocode.io is a little funky though:
+                             * "268 S. State St. ""Salt Lake City"" ""UT"" 84111 ""Celtic Bank"""
+                             * 
+                             * So we'll split on double quotes and trim up the chunks so they're ready for
+                             * record matching.
+                             */
+                            var miniCells = k.split('""');
+                            var miniAddress1 = $.trim(miniCells[0]).substr(1);
+                            var miniCity = $.trim(miniCells[1]);
+                            var miniPostal = $.trim(miniCells[4]);
+                            var resIndexCheck = 0;
+
+                            $.each(appData.addressArray, function(va, ke) {
+                                if ((ke.address_1 == miniAddress1) &&
+                                    (ke.city == miniCity) &&
+                                    (ke.postal == miniPostal)) {
+                                    resultIndex = resIndexCheck;
+                                    foundResult = 1;
+                                    return false;
+                                }
+                                resIndexCheck++;
+                            });
+                        } else {
+                            if (foundResult == 1) {
+                                /*
+                                 * we know the cell indices of the three fields we are interested in
+                                 */
+                                switch (cellIndex) {
+                                    case 1:
+                                        if (k != 0) {
+                                            appData.addressArray[resultIndex].lat = k;
+                                        }
+                                        break;
+                                    case 2:
+                                        if (k != 0) {
+                                            appData.addressArray[resultIndex].lng = k;
+                                            appData.addressArray[resultIndex].resolved = 1;
+                                            appData.addressArray[resultIndex].link = "https://maps.google.com/?q=" +
+                                                appData.addressArray[resultIndex].lat + "," + k;
+                                            resolvedAddresses++;
+                                        }
+                                        break;
+                                    case 4:
+                                        appData.addressArray[resultIndex].accuracy = k;
+                                        break;
+                                }
+                            }
+                        }
+                        cellIndex++;
+                    }
+                    curIndex++;
+                }
+
+                appData.listDownloaded = 1;
+                appData.resolvedCount = resolvedAddresses;
+
+                if (curIndex > 0) {
+                    debugMessage("Parse success", 1);
+                    debugMessage(appData, 1);
+                    appData.listStatus = "complete";
+                } else {
+                    debugMessage("Parse failure", 1);
+                    debugMessage("No addresses were parsed");
+                }
+                populateResultsTable();
+            }
+
+            function populateResultsTable() {
+
+                appData.stepIndex = 3;
+                var dt = $('#geoResultsTable').DataTable();
+
+                for (var i = 0; i < appData.addressCount; i++) {
+                    var tmpAddress = appData.addressArray[i].address_1 + " " + appData.addressArray[i].address_2;
+                    var strAddress = '<span style="font-size: 12px;">' + $.trim(tmpAddress) + ", " +
+                        appData.addressArray[i].city + ", " + appData.addressArray[i].state + " " + appData.addressArray[i].postal + '</span>';
+
+                    if (appData.addressArray[i].resolved == 1) {
+                        var strLink = '<a title="View in Google Maps" class="button" href="' + appData.addressArray[i].link + '" target="_blank"><i class="fas fa-map-marker-alt"></i> View</a>';
+                        var strLat = appData.addressArray[i].lat;
+                        var strLng = appData.addressArray[i].lng;
+                        var strLabel = appData.addressArray[i].label;
+                    } else {
+                        var strLink = "";
+                        var strLat = "";
+                        var strLng = "";
+                        var strLabel = '<a class="noLink" href="javascript:void(0)" data-title="Geocode.io was not able to geocode this address.">' +
+                            '<span class="geoError"><i class="fas fa-exclamation-triangle"></i></span>&nbsp;' +
+                            appData.addressArray[i].label + '</a>';
+                    }
+
+                    dt.row.add([
+                        i + 1,
+                        strLabel,
+                        strAddress,
+                        strLat,
+                        strLng,
+                        appData.addressArray[i].accuracy,
+                        strLink
+                    ]).draw(false);
+                }
+                finalState();
+            }
+
+        });
+    </script>
+</body>
+
+</html>
