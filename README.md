@@ -14,6 +14,22 @@ E[Process results]-->F[Display results in a table]
 ```
 *Pro tip: All of the JS code in index.html is very well-documented!*
 
+## geocod.io API Key
+
+For demonstration purposes, the app is set to use an API key belonging to Lenora Chase.
+
+The API key **can** be set at runtime by the user, and by automated tests. Your geocod.io API key needs to have the POST and GET permissions enabled for the LISTS endpoint.
+
+If you manually set the API key, it *should* persist through page refreshes, although that isn't guaranteed since it is based on your browser's handling of form input caching. If you do not want to manually set the key for every app instance, simply edit the index.html file and locate the geoAPIKey input on line #31. Then, replace the value with your own key and the app will default to using it instead.
+
+In your browser's developer console, use the following command to manually set an API key:
+```
+setGeoAPIKey(api_key)
+```
+
+This is an exposed function so it can be called from tests as well.
+
+
 ## App Debug Mode
 
 Debug mode will provide verbose status messages and payload data in the browser's console after API calls and other functions have been executed. Any errors will be routed to the console as well. When debug mode is disabled, errors will be displayed using alerts instead.
@@ -55,7 +71,14 @@ Label,Address 1,Address 2,City,State,Zip
 | State | Both the app and geocode.io expect a two-character abbreviated state, such as **NM** or **MD**. |
 | Zip | At the very minimum, a standard zip/postal code must be supplied. Zip+4 codes are supported and optional. |
 
-Once you have selected your CSV file, you can then click the **Submit CSV Data and Send Request** button.
+Example rows:
+```
+Home,123 Anywhere St.,,Nowheresville,CA,94123
+,3129 S. Douglas Fir Drive,Ste 456,Salt Lake City,UT,84116
+```
+*Remember: Do **not** include a header row in your CSV file!*
+
+Once you have browsed for and selected the file, you can then click the **Submit CSV Data and Send Request** button.
 
 ----
 
@@ -63,8 +86,9 @@ Once you have selected your CSV file, you can then click the **Submit CSV Data a
 
 1. The app will process the CSV file and build its internal collection of addresses, preparing them to send to geocod.io.
 2. The hidden **#appDebugMode** input will be checked. If its value == 1, the app's debug mode will be enabled (displaying a message in the footer).
-3. The app will call geocode.io's LISTS endpoint and supply all of the loaded addresses as a single list for processing. geocod.io will return a List ID.
-4. These addresses will also be displayed in a table for reference.
+3. If an API key has not been manually set through the console, the default key stored on line #31 of index.html file be used.
+4. The app will call geocode.io's LISTS endpoint and supply all of the loaded addresses as a single list for processing. geocod.io will return a List ID.
+5. These addresses will be displayed in a table for reference.
 
 You can now click the **Get List Status and Display Results** button.
 
@@ -88,10 +112,10 @@ While the core logic is written in pure JS/HTML (no templating or frameworks), s
 
 * **jQuery** - Used to simplify ajax calls/error handling, array iteration, and tidy up strings. The code can be refactored to omit its usage and would still work in the same way.
 * **DataTables** - For prettier tables with extra functionality such as pagination, search, and column sorting. The app's code handles writing data to the tables before they are rendered by this library.
-* **Modernizr** - This can be used to detect whether the browser supports the native HTML 5 file input/upload control, and was added for this reason. However, the app is currently performing this check on its own for demonstration purposes.
+* **Modernizr** - This can be used to detect browser support for the native HTML 5 file input/upload control, and was added for this reason. However, the app is currently performing this check on its own to reduce dependencies for demonstration purposes.
 * **FontAwesome** - Icons and button loading animations.
 * **Google Fonts** - For the Roboto, Arial, sans-serif font family.
 
 ----
 
-*Geocode Test App created by Lenora Chase on Jan 20th, 2023. Automated tests added Jan 21st.*
+*Geocode Test App created by Lenora Chase on Jan 20th, 2023. Cypress test suite added Jan 21st.*

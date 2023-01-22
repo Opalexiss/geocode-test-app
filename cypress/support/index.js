@@ -24,6 +24,4 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-const cypressConfig = require('../../cypress.config');
-
 require('cypress-file-upload');

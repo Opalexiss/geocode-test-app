@@ -28,6 +28,7 @@
         <h3>Step 1. Load addresses from CSV and send to geocod.io</h3>
         <form action="javascript:void(0);">
             <input type="hidden" data-cy="appDebugMode" id="appDebugMode" name="appDebugMode" value="1" />
+            <input type="hidden" data-cy="geoAPIKey" id="geoAPIKey" name="geoAPIKey" value="06f69a9993d3f3a939cc6d3f6d9a6a9f13e116c" />
             <div class="info">
                 <div class="info-item">
                     Please select a CSV file with addresses in the following format: Label, Address 1, Address 2, City, State, Zip.
@@ -44,7 +45,7 @@
     <div style="display: none;" class="main-block" id="blockStep2">
         <h3>Step 2. Wait for geocod.io to process data and fetch results</h3>
         <form action="javascript:void(0);">
-            <table id="csvResultsTable" class="dtable stripe" style="width: 100%">
+            <table id="csvResultsTable" data-cy="csvResultsTable" class="dtable stripe" style="width: 100%">
                 <thead>
                     <tr>
                         <td></td>
@@ -67,7 +68,7 @@
     <div style="display: none;" class="main-block" id="blockStep3">
         <h3>Step 3. View geocoded address results</h3>
         <form action="javascript:void(0);">
-            <table id="geoResultsTable" class="dtable stripe" style="width: 100%">
+            <table id="geoResultsTable" data-cy="geoResultsTable" class="dtable stripe" style="width: 100%">
                 <thead>
                     <tr>
                         <td></td>
@@ -88,8 +89,8 @@
 
     <div class="main-block">
         <div id="app-footer" style="font-size: 12px !important;">Geocode Test App version Jan.20.2023 by Lenora Chase. Check out the README in the
-            <a target="_blank" href="https://github.com/Opalexiss/geocode-test-app">Github repo</a>.
-            <span id="debugModeStatus" style="display: none; color: #049c87">&nbsp;Debug mode enabled.</span>
+            <a target="_blank" data-cy="githubLink" href="https://github.com/Opalexiss/geocode-test-app">Github repo</a>.
+            <span id="debugModeStatus" data-cy="debugModeStatus" style="display: none; color: #049c87">&nbsp;Debug mode enabled.</span>
         </div>
     </div>
 
@@ -116,9 +117,27 @@
             addressArray: []
         };
 
-        // This geocod.io API key belongs to Lenora Chase
-        const geocodio_api_key = '06f69a9993d3f3a939cc6d3f6d9a6a9f13e116c';
+        /*
+         * The geocod.io API Key set by default belongs to Lenora Chase
+         * use the setGeoAPIKey(strKey) command in the console to set your own key.
+         */
+        var geocodio_api_key = '';
         const geocodio_endpoint = 'https://api.geocod.io/v1.7/';
+
+        /*
+         * setGeoAPIKey(strKey)
+         *
+         * This is a function exposed to the console for manually setting a geocod.io api key
+         */
+        function setGeoAPIKey(strKey = '') {
+            if (strKey.length > 9) {
+                $('#geoAPIKey').val(strKey);
+                geocodio_api_key = strKey;
+                return "New geocod.io API key has been set";
+            } else {
+                return "Please supply a geocod.io API key";
+            }
+        }
 
         /*
          * enableDebuggingMode()
@@ -180,15 +199,22 @@
             $("#btnListSubmit").bind("click", function(e) {
                 e.preventDefault();
 
-                // Prevent clicking the buttons while we're processing
+                /* 
+                 * Prevent clicking the buttons while we're working. We won't display the loading message/animation until
+                 * we're certain a valid CSV file has been selected.
+                 */
                 $(this).prop("disabled", true);
                 $('#csvUpload').prop("disabled", true);
-                displayLoadingIcon();
 
                 // If debug mode isn't manually set by this point, we'll go with whatever value is hardcoded in the hidden input
                 if ($('#appDebugMode').val() == 1) {
                     appData.debugMode = 1;
                     $('#debugModeStatus').show();
+                }
+
+                // Retrieve the geocod.io api key from the hidden input and use it, if it hasn't already been manually set
+                if (geocodio_api_key == '') {
+                    geocodio_api_key = $('#geoAPIKey').val();
                 }
 
                 // Make sure the file has a .csv or .txt extension before touching it
@@ -209,6 +235,7 @@
                             // One row per line. aka separate data by line breaks
                             var rows = e.target.result.split("\n");
                             debugMessage("Importing " + rows.length + " row(s)", 1);
+                            displayLoadingIcon();
 
                             for (var i = 0; i < rows.length; i++) {
 
@@ -256,20 +283,28 @@
                                 debugMessage("Import success", 1);
                                 populateAddressTable();
                             } else {
-                                debugMessage("Import failure", 1);
-                                debugMessage("No addresses were imported");
+                                errorMessage("Import failure", 1);
+                                errorMessage("No addresses were imported");
+                                resetStep1Button();
                             }
                         }
                         reader.readAsText($("#csvUpload")[0].files[0]);
                     } else {
-                        debugMessage("Import failure", 1);
-                        debugMessage("This browser does not support HTML 5");
+                        errorMessage("Import failure", 1);
+                        errorMessage("This browser does not support HTML 5");
                     }
                 } else {
-                    debugMessage("Import failure", 1);
-                    debugMessage("Please upload a valid CSV file");
+                    errorMessage("Import failure", 1);
+                    errorMessage("Please upload a valid CSV file");
+                    resetStep1Button();
                 }
             });
+
+            function resetStep1Button() {
+                $('#btnListSubmit').prop("disabled", false);
+                $('#csvUpload').prop("disabled", false);
+                $('#btnListSubmit').html('Submit CSV Data and Send Request');
+            }
 
             /*
              * populateAddressTable()
@@ -340,13 +375,13 @@
                                 $('#blockStep2').fadeIn('fast');
                             });
                         } else {
-                            debugMessage("Send geo data failure, 1");
-                            debugMessage("Missing List ID from response");
+                            errorMessage("Send geo data failure, 1");
+                            errorMessage("Missing List ID from response");
                             debugMessage(response, 1);
                         }
                     },
                     function() {
-                        debugMessage("Send geo data failure");
+                        errorMessage("Send geo data failure");
                     }
                 );
             }
@@ -363,6 +398,25 @@
             function debugMessage(strMessage, debugOnly = 0) {
                 if (appData.debugMode == 1) {
                     console.log(strMessage);
+                } else {
+                    if (debugOnly == 0) {
+                        alert(strMessage);
+                    }
+                }
+            }
+
+            /*
+             * errorMessage(strMessage, debugOnly = 0)
+             *
+             * Depending on whether the app is in debug mode or not,
+             * messages will be displayed to the user in an alert, or routed as an error to the console
+             * and any third-party automation functions.
+             * 
+             * If the debugOnly flag is set to 1, then the message will be ignored except in debug mode
+             */
+            function errorMessage(strMessage, debugOnly = 0) {
+                if (appData.debugMode == 1) {
+                    console.error(strMessage);
                 } else {
                     if (debugOnly == 0) {
                         alert(strMessage);
@@ -453,18 +507,18 @@
                                     }
                                 }
                             } else {
-                                debugMessage("Get geo list update failure", 1);
-                                debugMessage("Missing List ID from response");
+                                errorMessage("Get geo list update failure", 1);
+                                errorMessage("Missing List ID from response");
                                 debugMessage(response, 1);
                             }
                         },
                         function() {
-                            debugMessage("Get geo list update failure");
+                            errorMessage("Get geo list update failure");
                         }
                     );
                 } else {
-                    debugMessage("Get geo list update failure", 1);
-                    debugMessage("There is not a pending list for this app instance");
+                    errorMessage("Get geo list update failure", 1);
+                    errorMessage("There is not a pending list for this app instance");
                 }
             }
 
@@ -489,7 +543,7 @@
                         processDownloadedData(response);
                     },
                     function() {
-                        debugMessage("Download geo list failure");
+                        errorMessage("Download geo list failure");
                     }
                 );
             }
@@ -606,8 +660,8 @@
                     debugMessage(appData, 1);
                     appData.listStatus = "complete";
                 } else {
-                    debugMessage("Parse failure", 1);
-                    debugMessage("No addresses were parsed");
+                    errorMessage("Parse failure", 1);
+                    errorMessage("No addresses were parsed");
                 }
                 populateResultsTable();
             }

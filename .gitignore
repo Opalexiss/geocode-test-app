@@ -1,2 +1,5 @@
 /.DS_Store
 /.vscode
+/cypress.env.json
+/node_modules
+/cypress/videos

@@ -18,3 +18,10 @@ import './commands'
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
+
+beforeEach(() => {
+    cy.on("window:before:load", (win) => {
+        cy.spy(win.console, 'log').as('consoleLog');
+        cy.spy(win.console, 'error').as('consoleError');
+    })
+})
