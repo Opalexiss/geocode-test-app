@@ -106,7 +106,7 @@ If debug mode is enabled, the full appData object will be dumped to the console,
 
 ----
 
-## Dependencies
+### Dependencies
 
 While the core logic is written in pure JS/HTML (no templating or frameworks), several libraries are used for enhnaced viewing and QoL improvements.
 
@@ -115,6 +115,46 @@ While the core logic is written in pure JS/HTML (no templating or frameworks), s
 * **Modernizr** - This can be used to detect browser support for the native HTML 5 file input/upload control, and was added for this reason. However, the app is currently performing this check on its own to reduce dependencies for demonstration purposes.
 * **FontAwesome** - Icons and button loading animations.
 * **Google Fonts** - For the Roboto, Arial, sans-serif font family.
+
+----
+
+## Test Automation with Cypress
+
+![Cypress Testing](https://lenoradev.com/img/cypress_run.png)
+
+Eight tests were written and included in the repo. Because this is a very simple application without much interaction, most of the tests are to ensure the app's exposed functions are working correctly.
+
+The most important test is **full_app_cycle.spec.cy.js** which tests everything from start to finish and validates the geocod.io API calls. In a real world use case, much more detailed assertions would be made against the data itself, not just the API calls and data transfers.
+
+To run these tests locally, there a few steps. The primary one, which you may already be familiar with, is installing Cypress and all of its dependencies. Node_modules is not included in the repository.
+
+After cloning/downloading the repo to your local machine, navigate to the root project directory in a terminal window and execute:
+```
+npm install
+```
+
+Next, you will need to create your local Cypress environment variables file. This is also not included in the repo because it will be used to store your geocod.io api key for testing, so the contents of this file could be different for everyone.
+
+In your terminal window, execute:
+```
+touch cypress.env.json
+```
+Then, open the newly created cypress.env.json file and add the following content before saving and closing:
+```
+{
+    "api_key": "your_api_key_goes_here_in_the_quotes"
+}
+```
+Your geocod.io api key must have POST and GET permissions enabled for the LISTS endpoint. If you do not have a key, you can <a href="https://dash.geocod.io/apikey" target="_blank">get one here</a>. If you are in a hurry, you can *borrow* my key, which is on line #31 of index.html.
+
+Now you are ready to run the tests! You can do that using the Cypress desktop app, or by using the following in your terminal:
+```
+npx cypress run
+```
+
+By default, these tests will be run against a temporary production environment I have set up at https://lenoradev.com, which will eventually be taken offline. You can change the url to another installation, or your local environment, by modifying the cy.visit command at the beginning of each test.
+
+Next, I will go over some manual test cases.
 
 ----
 
