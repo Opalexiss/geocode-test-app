@@ -1,6 +1,8 @@
 # Geocode Test App
 
-A client-side JS app for testing geocod.io API functionality and automation with Cypress.
+![Application screenshot](https://lenoradev.com/img/app_screenshot.png)
+
+*A client-side JS app for testing geocod.io API functionality and automation with Cypress.*
 
 ## Flow
 
@@ -147,12 +149,14 @@ Then, open the newly created cypress.env.json file and add the following content
 ```
 Your geocod.io api key must have POST and GET permissions enabled for the LISTS endpoint. If you do not have a key, you can <a href="https://dash.geocod.io/apikey" target="_blank">get one here</a>. If you are in a hurry, you can *borrow* my key, which is on line #31 of index.html.
 
-Now you are ready to run the tests! You can do that using the Cypress desktop app, or by using the following in your terminal:
+Now you are ready to run the tests! You can do that from the Cypress desktop app, or by using the following in your terminal:
 ```
 npx cypress run
 ```
 
 By default, these tests will be run against a temporary production environment I have set up at https://lenoradev.com, which will eventually be taken offline. You can change the url to another installation, or your local environment, by modifying the cy.visit command at the beginning of each test.
+
+Note: The test_addresses.csv file used for testing can be found in /cypress/fixtures. You can edit this, **but** the tests are expecting there to be exactly three entries.
 
 Next, I will go over some manual test cases.
 
