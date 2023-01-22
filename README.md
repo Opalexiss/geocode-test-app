@@ -9,7 +9,7 @@
 ```mermaid
 flowchart TD;
 A[Load CSV]-->B[Send List to geocod.io];
-B[Send List to geocode.io]-->C[Check processing status];
+B[Send List to geocod.io]-->C[Check processing status];
 C[Check processing status]-->D[Download completed data];
 D[Download completed data]-->E[Process results];
 E[Process results]-->F[Display results in a table]
