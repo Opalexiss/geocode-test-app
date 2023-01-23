@@ -35,9 +35,9 @@ This is an exposed function so it can be called from tests as well.
 
 Debug mode will provide verbose status messages and payload data in the browser's console after API calls and other functions have been executed. Any errors will be routed to the console as well. When debug mode is disabled, errors will be displayed using alerts instead.
 
-When the **Get List Status** button is clicked, the app will check a hidden input field for the flag that is set upload HTML load/reload. This flag is usually set to 1. 
+This can be enabled or disabled at *any time* by calling special functions from the browser's console. If you manually enable/disable debugging, then that setting will typically persist through page reloads. Otherwise, the default setting will follow what is set in the hidden input on line #30 of the source (on by default), and will activate after clicking the first button. 
 
-Debug mode can be changed at *any time* by calling these functions from the browser's console. If you manually enable/disable debugging, then that setting will persist through page reloads. Otherwise, the default setting will follow what is set in the hidden input.
+To set this manually, use these functions in the browser console:
 
 ```
 enableDebuggingMode();
@@ -47,7 +47,7 @@ and
 disableDebuggingMode();
 ```
 
-Regardless of whether debug mode is enabled or not, you can have the app dump its full appData configuration object and address collection data into the console at any time by calling this function:
+Regardless of whether debug mode is enabled or not, you can dump the full appData configuration object and address collection data into the console at any time by calling this function:
 ```
 displayAppData();
 ```
@@ -57,7 +57,7 @@ displayAppData();
 ### Step 1. Load addresses from CSV and send to geocod.io
 ![Step 1 screenshot](https://lenoradev.com/img/app_step1.png)
 
-Start with a .csv containing some locations to check. The csv must comma-delimited, without any of the fields wrapped in quotes. Quotes will not be stripped from the data and will cause problems with the data that is returned from geocod.io. Do not include a header row, only the addresses to be looked up.
+Start with a .csv containing some locations to check. The csv must comma-delimited, without any of the fields wrapped in quotes. Quotes will not be stripped from the data and will cause problems with the data that is returned from geocod.io. Do not include a header row, only the addresses themselves.
 
 Use this format for your CSV file:
 ```
@@ -78,7 +78,7 @@ Example rows:
 Home,123 Anywhere St.,,Nowheresville,CA,94123
 ,3129 S. Douglas Fir Drive,Ste 456,Salt Lake City,UT,84116
 ```
-*Remember: Do **not** include a header row in your CSV file!*
+*Remember: Do **not** include a header row in your CSV file*
 
 Once you have browsed for and selected the file, you can then click the **Submit CSV Data and Send Request** button.
 
@@ -139,7 +139,7 @@ After cloning/downloading the repo to your local machine, navigate to the root p
 npm install
 ```
 
-Next, you will need to modify your local Cypress environment variables file. This is not something I would normally include in the repo because it stores the geocod.io api key and other tester-specific variables, so the contents of this file would be different for everyone. I have included it anyway to make everything a little more ready to go out of the box.
+Next, you will need to modify your local Cypress environment variables file. This is not something I would normally include in the repo because it stores the geocod.io api key and other tester-specific variables, which means the contents of this file would be different for everyone. I have included it anyway to make everything a little more ready to go out of the box.
 
 In the project root directory, open the cypress.env.json file. It will contain the following:
 ```
