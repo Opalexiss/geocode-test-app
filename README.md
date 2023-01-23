@@ -8,11 +8,12 @@ See it in action at https://lenoradev.com (temporary production environment).
 
 ```mermaid
 flowchart TD;
-A[Load CSV]-->B[Send List to geocod.io];
-B[Send List to geocod.io]-->C[Check processing status];
-C[Check processing status]-->D[Download completed data];
-D[Download completed data]-->E[Process results];
-E[Process results]-->F[Display results in a table]
+A[Load CSV]-->B[Process CSV data];
+B[Process CSV data]-->C[Send List to geocod.io];
+C[Send List to geocod.io]-->D[Check processing status];
+D[Check processing status]-->E[Download completed data];
+E[Download completed data]-->F[Process results];
+F[Process results]-->G[Display results in a table]
 ```
 *Pro tip: All of the JS code in index.html is very well-commented!*
 
@@ -40,16 +41,16 @@ This can be enabled or disabled at *any time* by calling special functions from 
 To set this manually, use these functions in the browser console:
 
 ```
-enableDebuggingMode();
+enableDebuggingMode()
 ```
 and
 ```
-disableDebuggingMode();
+disableDebuggingMode()
 ```
 
 Regardless of whether debug mode is enabled or not, you can dump the full appData configuration object and address collection data into the console at any time by calling this function:
 ```
-displayAppData();
+displayAppData()
 ```
 
 ----
@@ -58,6 +59,8 @@ displayAppData();
 ![Step 1 screenshot](https://lenoradev.com/img/app_step1.png)
 
 Start with a .csv containing some locations to check. The csv must comma-delimited, without any of the fields wrapped in quotes. Quotes will not be stripped from the data and will cause problems with the data that is returned from geocod.io. Do not include a header row, only the addresses themselves.
+
+*There are a few ready-made CSV files for use included in the repo. You can also download them directly from the manual test cases further below.*
 
 Use this format for your CSV file:
 ```
@@ -222,7 +225,7 @@ Debug mode (Step 3) is optional, but it will show additional errors in the conso
 | 6 | Click the **"Submit CSV Data and Send Request"** button | | The button will briefly display "Working..." with a loading animation, before the view changes. |
 | 7 | Confirm the elements of this new view | Below the app title should be a line that starts with "Step 2." A table with five addresses should be displayed in the center. Below that should be a button with the text, **"Get List Status and Display Results"** | These three elements should be visible and displayed correctly. |
 | 8 | Verify that the labels and addresses match what is in more_addresses.csv | | The table is displaying correct information. |
-| 9 | Click the **"Get List Status and Display Results"** button | | The button will briefly display "Working..." with a loading animation, before the view changes again. |
+| 9 | Wait a few seconds and click the **"Get List Status and Display Results"** button | | The button will briefly display "Working..." with a loading animation, before the view changes again. |
 | 10 | Confirm the elements of this new view | Below the app title should be a line that starts with "Step 3." A table with five addresses should be displayed in the center. | These two elements should be visible and displayed correctly. |
 | 11 | Verify that the labels and addresses match what is in more_addresses.csv | | The table is displaying correct information. |
 | 12 | Verify that latitude, longitude, accuracy, and link buttons appear for every row except "Hillcrest Park Zoo" | | These columns all contain data except for "Hillcrest Park Zoo" |

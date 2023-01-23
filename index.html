@@ -117,8 +117,7 @@
             addressArray: []
         };
 
-        /*
-         * The geocod.io API Key set by default belongs to Lenora Chase
+        /*         
          * use the setGeoAPIKey(strKey) command in the console to set your own key.
          */
         var geocodio_api_key = '';
@@ -184,7 +183,7 @@
              *
              * When the Submit CSV Data button is clicked, this will parse the selected file into JSON and
              * display the results in Step 2's DataTable. @todo: Implement checkboxes to allow for individual address selection.
-             * After the table has been populate, an API call to geocod.io's LISTS endpoint will be made for list creation.
+             * After the table has been populated, an API call to geocod.io's LISTS endpoint will be made for list creation.
              * The returned List ID will be stored in appData for use with the Get Status button.
              * 
              * Assumption: The CSV is correctly formatted with 6 columns containing valid data that matches the form description.
@@ -235,6 +234,8 @@
                             // One row per line. aka separate data by line breaks
                             var rows = e.target.result.split("\n");
                             debugMessage("Importing " + rows.length + " row(s)", 1);
+
+                            // Now we'll show the loading message
                             displayLoadingIcon();
 
                             for (var i = 0; i < rows.length; i++) {
@@ -275,10 +276,9 @@
                                 appData.addressCount++;
                             }
 
-                            // 
                             appData.csvParsePerformed = 1;
 
-                            // Only perform the table update and API call if at least 1 address was loaded.
+                            // Only perform the table update and API call if at least 1 address was loaded.                            
                             if (appData.addressCount > 1) {
                                 debugMessage("Import success", 1);
                                 populateAddressTable();
@@ -438,7 +438,7 @@
             /*
              * displayLoadingIcon(varStep = 1)
              *
-             * Sets a button (Step 1's by default) to display a loading messaged and animated spinner
+             * Sets a button (Step 1's by default) to display a loading message and animated spinner
              * 
              * If Step 2's button is set here, but geocod.io isn't finished processing the list,
              * then getGeoStatus() will update the button text so this function can be called again on
@@ -483,7 +483,7 @@
             /*
              * getGeoStatus()
              *
-             * Using the List ID given to us in the first API call, we'll query the Lists endpoing for a status update.
+             * Using the List ID given to us in the first API call, we'll query the Lists endpoint for a status update.
              * 
              * If processing is not complete, the button text will be updated with a status message and approximate time remaining,
              * then will return to a ready (not disabled) state.
