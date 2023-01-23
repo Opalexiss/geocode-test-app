@@ -279,12 +279,14 @@
                             appData.csvParsePerformed = 1;
 
                             // Only perform the table update and API call if at least 1 address was loaded.
-                            if (appData.addressCount > 0) {
+                            if (appData.addressCount > 1) {
                                 debugMessage("Import success", 1);
                                 populateAddressTable();
                             } else {
                                 errorMessage("Import failure", 1);
                                 errorMessage("No addresses were imported");
+                                appData.addressCount = 0;
+                                appData.addressArray = [];
                                 resetStep1Button();
                             }
                         }
@@ -296,6 +298,8 @@
                 } else {
                     errorMessage("Import failure", 1);
                     errorMessage("Please upload a valid CSV file");
+                    appData.addressCount = 0;
+                    appData.addressArray = [];
                     resetStep1Button();
                 }
             });
@@ -306,7 +310,7 @@
                 if (showError = 0) {
                     $('#btnListSubmit').html('Submit CSV Data and Send Request');
                 } else {
-                    $('#btnListSubmit').html('Error Communicating with geocod.io - is it a good API key? You May Try Again');
+                    $('#btnListSubmit').html('Please ensure a valid CSV file is selected, that your API key is set properly, and try again');
                 }
             }
 

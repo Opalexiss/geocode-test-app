@@ -74,7 +74,7 @@ describe('Full App Cycle', () => {
          * 
          * The assertion will check that the results in the table match the expected_entries
          */
-        cy.get('@resultsTableInfo').should('have.text', "Showing 1 to 3 of 3 entries")
+        cy.get('@resultsTableInfo').should('contain.text', "of " + Cypress.env('expected_entries') + " entries")
 
         /*
          * Lastly, we will check to make sure the app has put itself in its finished state, which means no

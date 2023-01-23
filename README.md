@@ -31,7 +31,6 @@ setGeoAPIKey(api_key)
 
 This is an exposed function so it can be called from tests as well.
 
-
 ## App Debug Mode
 
 Debug mode will provide verbose status messages and payload data in the browser's console after API calls and other functions have been executed. Any errors will be routed to the console as well. When debug mode is disabled, errors will be displayed using alerts instead.
@@ -179,9 +178,60 @@ There are several steps in the full cycle test where an assertion may fail (ie, 
 
 My goal was to add an afterEach assertion that causes the tests to fail any time a consoleError message appears. It is a little tricky getting Cypress to work nicely with console output, though, so this may have to wait until a little later.
 
-Any time a consoleError is thrown, a test step is going to fail anyway. At least in the full cycle test.
+Any time a consoleError is thrown, a test step is going to fail anyway. At least with the full cycle test.
 
-Next, I will go over some manual test cases.
+----
+
+## Manual Test Cases
+
+To be safe, I made each test case fully independant of one another, in case they are not performed in order by the same tester. The CSV's used for each test case is different, with the final one showing us what happens when geocod.io fails to resolve an address.
+
+### Test Case #1: CSV File Selection
+This will make sure we can select a valid CSV file, and includes a bit of negative testing as well. 
+| | Test Step | Test Data | Expected Result |
+|---|---------|-----------|-----------------|
+| 1 | Load the app in your browser | | The application loads and displays properly, without any console errors. |
+| 2 | Click the **"Submit CSV Data and Send Request"** button without having selected a CSV file | | If debug mode is enabled, a "Please upload a valid CSV file" message is displayed in the console. Otherwise this will be shown as an alert. The button's text changes to an error message and asks you to try again. |
+| 3 | Use the file control to browse for and select the supplied blank.csv file | Download and use <a href="_blank" href="https://lenoradev.com/cypress/fixtures/blank.csv">blank.csv</a> | The file input displays the name of blank.csv |
+| 4 | Click the **"Submit CSV Data and Send Request"** button | | In debug mode, a "No addresses were imported" error will display in the console. Otherwise it will be shown as an alert.|
+| 5 | Refresh the page | | The application reloads to its default state and the file input control shows "No file selected." |
+| 6 | Use the file control to browse for and select the supplied test_addresses.csv file | Download and use <a href="_blank" href="https://lenoradev.com/cypress/fixtures/test_addresses.csv">test_addresses.csv</a> | The file input displays the name of test_addresses.csv |
+
+### Test Case #2: Send Address List to geocod.io
+Debug mode (Step 3) is optional, but it will show additional errors in the console if something goes wrong.
+| | Test Step | Test Data | Expected Result |
+|---|---------|-----------|-----------------|
+| 1 | Load the app in your browser | | The application loads and displays properly, without any console errors. |
+| 2 | Open the browser's developer tools and go to the console tab | F12 | The console is open and there is a line at the bottom where commands can be entered. |
+| 3 | In the console, type **enableDubuggingMode()** and press Enter | | "Debugging mode enabled" will display in the console, and an additional indication of that will be appended to the footer. |
+| 4 | In the console, type **setGeoAPIKey("your_api_key")**. Leave the quotes, and replace *your_api_key* with a geocod.io API key that has POST/GET perms for LISTS. Press Enter. | You may use Lenora's API key on line #31 of index.html, while it remains active. | "New geocod.io API key has been set" will display in the console. |
+| 5 | Use the file control to browse for and select the supplied test_addresses.csv file | Download and use <a href="_blank" href="https://lenoradev.com/cypress/fixtures/test_addresses.csv">test_addresses.csv</a> | The file input displays the name of test_addresses.csv |
+| 6 | Click the **"Submit CSV Data and Send Request"** button | | The button will briefly display "Working..." with a loading animation, before the view changes. |
+| 7 | Confirm the elements of this new view | Below the app title should be a line that starts with "Step 2." A table with three addresses should be displayed in the center. Below that should be a button with the text, **"Get List Status and Display Results"** | These three elements should be visible and displayed correctly. |
+| 8 | Verify that the labels and addresses match what is in test_addresses.csv | | The table is displaying correct information. |
+
+### Test Case #3: Verify Completed Results from geocod.io
+Debug mode (Step 3) is optional, but it will show additional errors in the console if something goes wrong.
+| | Test Step | Test Data | Expected Result |
+|---|---------|-----------|-----------------|
+| 1 | Load the app in your browser | | The application loads and displays properly, without any console errors. |
+| 2 | Open the browser's developer tools and go to the console tab | F12 | The console is open and there is a line at the bottom where commands can be entered. |
+| 3 | In the console, type **enableDubuggingMode()** and press Enter | | "Debugging mode enabled" will display in the console, and an additional indication of that will be appended to the footer. |
+| 4 | In the console, type **setGeoAPIKey("your_api_key")**. Leave the quotes, and replace *your_api_key* with a geocod.io API key that has POST/GET perms for LISTS. Press Enter. | You may use Lenora's API key on line #31 of index.html, while it remains active. | "New geocod.io API key has been set" will display in the console. |
+| 5 | Use the file control to browse for and select the supplied more_addresses.csv file | Download and use <a href="_blank" href="https://lenoradev.com/cypress/fixtures/more_addresses.csv">more_addresses.csv</a> | The file input displays the name of more_addresses.csv |
+| 6 | Click the **"Submit CSV Data and Send Request"** button | | The button will briefly display "Working..." with a loading animation, before the view changes. |
+| 7 | Confirm the elements of this new view | Below the app title should be a line that starts with "Step 2." A table with five addresses should be displayed in the center. Below that should be a button with the text, **"Get List Status and Display Results"** | These three elements should be visible and displayed correctly. |
+| 8 | Verify that the labels and addresses match what is in more_addresses.csv | | The table is displaying correct information. |
+| 9 | Click the **"Get List Status and Display Results"** button | | The button will briefly display "Working..." with a loading animation, before the view changes again. |
+| 10 | Confirm the elements of this new view | Below the app title should be a line that starts with "Step 3." A table with five addresses should be displayed in the center. | These two elements should be visible and displayed correctly. |
+| 11 | Verify that the labels and addresses match what is in more_addresses.csv | | The table is displaying correct information. |
+| 12 | Verify that latitude, longitude, accuracy, and link buttons appear for every row except "Hillcrest Park Zoo" | | These columns all contain data except for "Hillcrest Park Zoo" |
+| 13 | Hover over the red error icon next to "Hillcrest Park Zoo" | | A tooltip appears and reads, "geocod.io was not able to geocode this address." |
+| 14 | Click one of the View buttons for a resolved address | | Google Maps opens in a tab with a map marker in the correct location.
+
+That concludes the documentation in this README. Please let me know if you have any questions or would like any clarifications or detailed explanations on anything presented here.
+
+The temporary production environment and my personal API key will remain active for at least another several weeks, and this repo will be updated again once those are no longer available.
 
 ----
 
