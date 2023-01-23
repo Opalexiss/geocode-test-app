@@ -1,6 +1,7 @@
 describe('Manual debug mode disable', () => {
     it('Disables debug mode through the form input and checks the result', () => {
-        cy.visit('https://lenoradev.com')
+        cy.visit(Cypress.env('test_url'))
+        cy.contains('Geocode Test App')
             // Set the debugMode flag to 0 using the hidden input
         cy.get('[data-cy="appDebugMode"]')
             .invoke('val', '0')

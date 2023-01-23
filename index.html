@@ -300,10 +300,14 @@
                 }
             });
 
-            function resetStep1Button() {
+            function resetStep1Button(showError = 0) {
                 $('#btnListSubmit').prop("disabled", false);
                 $('#csvUpload').prop("disabled", false);
-                $('#btnListSubmit').html('Submit CSV Data and Send Request');
+                if (showError = 0) {
+                    $('#btnListSubmit').html('Submit CSV Data and Send Request');
+                } else {
+                    $('#btnListSubmit').html('Error Communicating with geocod.io - is it a good API key? You May Try Again');
+                }
             }
 
             /*
@@ -376,12 +380,15 @@
                             });
                         } else {
                             errorMessage("Send geo data failure, 1");
-                            errorMessage("Missing List ID from response");
+                            errorMessage("Missing List ID from response", 1);
+                            debugMessage("There is a problem with the geocod.io API, cannot proceed")
                             debugMessage(response, 1);
+                            resetStep1Button();
                         }
                     },
                     function() {
                         errorMessage("Send geo data failure");
+                        resetStep1Button(1);
                     }
                 );
             }

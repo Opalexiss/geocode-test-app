@@ -1,8 +1,8 @@
 # Geocode Test App
 
-![Application screenshot](https://lenoradev.com/img/app_screenshot.png)
-
 *A client-side JS app for testing geocod.io API functionality and automation with Cypress.*
+
+See it in action at https://lenoradev.com (temporary production environment).
 
 ## Flow
 
@@ -14,13 +14,13 @@ C[Check processing status]-->D[Download completed data];
 D[Download completed data]-->E[Process results];
 E[Process results]-->F[Display results in a table]
 ```
-*Pro tip: All of the JS code in index.html is very well-documented!*
+*Pro tip: All of the JS code in index.html is very well-commented!*
 
 ## geocod.io API Key
 
 For demonstration purposes, the app is set to use an API key belonging to Lenora Chase.
 
-The API key **can** be set at runtime by the user, and by automated tests. Your geocod.io API key needs to have the POST and GET permissions enabled for the LISTS endpoint.
+The API key **can** be set at runtime by the user. Your geocod.io API key needs to have the POST and GET permissions enabled for the LISTS endpoint.
 
 If you manually set the API key, it *should* persist through page refreshes, although that isn't guaranteed since it is based on your browser's handling of form input caching. If you do not want to manually set the key for every app instance, simply edit the index.html file and locate the geoAPIKey input on line #31. Then, replace the value with your own key and the app will default to using it instead.
 
@@ -56,6 +56,7 @@ displayAppData();
 ----
 
 ### Step 1. Load addresses from CSV and send to geocod.io
+![Step 1 screenshot](https://lenoradev.com/img/app_step1.png)
 
 Start with a .csv containing some locations to check. The csv must comma-delimited, without any of the fields wrapped in quotes. Quotes will not be stripped from the data and will cause problems with the data that is returned from geocod.io. Do not include a header row, only the addresses to be looked up.
 
@@ -85,6 +86,7 @@ Once you have browsed for and selected the file, you can then click the **Submit
 ----
 
 ### Step 2. Wait for geocod.io to process data and fetch results
+![Step 1 screenshot](https://lenoradev.com/img/app_step2.png)
 
 1. The app will process the CSV file and build its internal collection of addresses, preparing them to send to geocod.io.
 2. The hidden **#appDebugMode** input will be checked. If its value == 1, the app's debug mode will be enabled (displaying a message in the footer).
@@ -97,6 +99,7 @@ You can now click the **Get List Status and Display Results** button.
 ----
 
 ### Step 3. View geocoded address results
+![Step 1 screenshot](https://lenoradev.com/img/app_step3.png)
 
 1. The LISTS endpoint is queried using the stored List ID to check on its processing status.
 2. If processing has not yet completed, the button's text will be updated with the approximate remaining time, and can be clicked again.
@@ -120,43 +123,63 @@ While the core logic is written in pure JS/HTML (no templating or frameworks), s
 
 ----
 
-## Test Automation with Cypress
+## Test Automation with Cypress.io
 
 ![Cypress Testing](https://lenoradev.com/img/cypress_run.png)
 
-Eight tests were written and included in the repo. Because this is a very simple application without much interaction, most of the tests are to ensure the app's exposed functions are working correctly.
+Eight tests were written and included in the repo. They can be found in **cypress/e2e**. Because this is a very simple application without much interaction, many of them are to ensure the app's exposed functions are working as expected.
 
-The most important test is **full_app_cycle.spec.cy.js** which tests everything from start to finish and validates the geocod.io API calls. In a real world use case, much more detailed assertions would be made against the data itself, not just the API calls and data transfers.
+The important test is **full_app_cycle.spec.cy.js** which tests the complete app cycle from start to finish, validating the geocod.io API calls in the process. In the real world, much more detailed assertions would be made against the data itself, not just the success of the API calls and data transfers.
 
-To run these tests locally, there a few steps. The primary one, which you may already be familiar with, is installing Cypress and all of its dependencies. Node_modules is not included in the repository.
+### Configuring Cypress
+
+To run these tests locally, there are a couple steps. The primary one, which you may already be familiar with, is installing Cypress and all of its dependencies locally. Node_modules is not included in the repository.
 
 After cloning/downloading the repo to your local machine, navigate to the root project directory in a terminal window and execute:
 ```
 npm install
 ```
 
-Next, you will need to create your local Cypress environment variables file. This is also not included in the repo because it will be used to store your geocod.io api key for testing, so the contents of this file could be different for everyone.
+Next, you will need to modify your local Cypress environment variables file. This is not something I would normally include in the repo because it stores the geocod.io api key and other tester-specific variables, so the contents of this file would be different for everyone. I have included it anyway to make everything a little more ready to go out of the box.
 
-In your terminal window, execute:
-```
-touch cypress.env.json
-```
-Then, open the newly created cypress.env.json file and add the following content before saving and closing:
+In the project root directory, open the cypress.env.json file. It will contain the following:
 ```
 {
-    "api_key": "your_api_key_goes_here_in_the_quotes"
+    "api_key": "your_api_key_goes_here_in_the_quotes",
+    "test_url": "https://lenoradev.com",
+    "csv_file": "test_addresses.csv",
+    "expected_entries": 3,
+    "list_wait_time": 5000
 }
 ```
-Your geocod.io api key must have POST and GET permissions enabled for the LISTS endpoint. If you do not have a key, you can <a href="https://dash.geocod.io/apikey" target="_blank">get one here</a>. If you are in a hurry, you can *borrow* my key, which is on line #31 of index.html.
+| Variable | Description |
+|-------|-------------|
+| api_key | Your geocod.io api key must have POST and GET permissions enabled for the LISTS endpoint. If you do not have a key, you can <a href="https://dash.geocod.io/apikey" target="_blank">get one here</a>. If you are in a hurry, you can *borrow* my key, which is already entered here. |
+| test_url | This is the location of the app you are testing against. By default, it is set to use the temporary production environment I have set up at https://lenoradev.com. If you want to test the local project directory, just change it to a forward slash. |
+| csv_file | This is the csv file containing the addresses to be used during testing. It is located in **cypress/fixtures**, and must follow the rules outlined at the top of this documentation. There is one included in this repo, which is the one set by default. |
+| expected_entries | This is the number of rows/addresses you supply in the csv file. It might seem silly to put this number here when the app can (and will) tell you exactly how many rows there are, but Cypress does not scan the csv so you need to tell it how many you are expecting. This number **must** be greater than 1. If you put 0 or 1 in here, the test will fail. |
+| list_wait_time | We want to give geocod.io enough time to process the list before querying the endpoint, because the test must make the assumption that it is ready for download, since we do not control their API and cannot handle varied wait times. Especially when we are dealing with milliseconds for just 2 or 3 addresses. |
+
+### Running Tests
 
 Now you are ready to run the tests! You can do that from the Cypress desktop app, or by using the following in your terminal:
 ```
 npx cypress run
 ```
 
-By default, these tests will be run against a temporary production environment I have set up at https://lenoradev.com, which will eventually be taken offline. You can change the url to another installation, or your local environment, by modifying the cy.visit command at the beginning of each test.
+### App Output for Cypress
 
-Note: The test_addresses.csv file used for testing can be found in /cypress/fixtures. You can edit this, **but** the tests are expecting there to be exactly three entries.
+The reason each test puts the app into debug mode is because I have set up some Cypress Spies to monitor the app's internal debug and error messages.
+
+![Cypress Testing](https://lenoradev.com/img/cypress_command_log.png)
+
+The lines you see with the purple consoleLog labels are directly outputted from the app code. In a browser, these messages would be visible in the developer console. They can be useful when monitoring test execution.
+
+There are several steps in the full cycle test where an assertion may fail (ie, after a button click), and the only way to identify the exact problem is from the specific error messages generated by the app itself. These will look very similar, but they will have a consoleError label instead. 
+
+My goal was to add an afterEach assertion that causes the tests to fail any time a consoleError message appears. It is a little tricky getting Cypress to work nicely with console output, though, so this may have to wait until a little later.
+
+Any time a consoleError is thrown, a test step is going to fail anyway. At least in the full cycle test.
 
 Next, I will go over some manual test cases.
 
