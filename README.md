@@ -19,11 +19,9 @@ F[Process results]-->G[Display results in a table]
 
 ## geocod.io API Key
 
-For demonstration purposes, the app is set to use an API key belonging to Lenora Chase.
-
 The API key **can** be set at runtime by the user. Your geocod.io API key needs to have the POST and GET permissions enabled for the LISTS endpoint.
 
-If you manually set the API key, it *should* persist through page refreshes, although that isn't guaranteed since it is based on your browser's handling of form input caching. If you do not want to manually set the key for every app instance, simply edit the index.html file and locate the geoAPIKey input on line #31. Then, replace the value with your own key and the app will default to using it instead.
+If you manually set the API key, it *should* persist through page refreshes, although that isn't guaranteed since it is based on your browser's handling of form input caching. If you do not want to manually set the key for every app instance, simply edit the index.html file and locate the geoAPIKey input on line #31. Then, replace the empty value with your own key and the app will default to using it instead.
 
 In your browser's developer console, use the following command to manually set an API key:
 ```
@@ -92,7 +90,7 @@ Once you have browsed for and selected the file, you can then click the **Submit
 
 1. The app will process the CSV file and build its internal collection of addresses, preparing them to send to geocod.io.
 2. The hidden **#appDebugMode** input will be checked. If its value == 1, the app's debug mode will be enabled (displaying a message in the footer).
-3. If an API key has not been manually set through the console, the default key stored on line #31 of index.html file be used.
+3. If an API key has not been manually set through the console, the default key stored on line #31 of index.html file be used, if present.
 4. The app will call geocode.io's LISTS endpoint and supply all of the loaded addresses as a single list for processing. geocod.io will return a List ID.
 5. These addresses will be displayed in a table for reference.
 
@@ -156,7 +154,7 @@ In the project root directory, open the cypress.env.json file. It will contain t
 ```
 | Variable | Description |
 |-------|-------------|
-| api_key | Your geocod.io api key must have POST and GET permissions enabled for the LISTS endpoint. If you do not have a key, you can <a href="https://dash.geocod.io/apikey" target="_blank">get one here</a>. If you are in a hurry, you can *borrow* my key, which is already entered here. |
+| api_key | Your geocod.io api key must have POST and GET permissions enabled for the LISTS endpoint. If you do not have a key, you can <a href="https://dash.geocod.io/apikey" target="_blank">get one here</a>. |
 | test_url | This is the location of the app you are testing against. By default, it is set to use the temporary production environment I have set up at https://lenoradev.com. If you want to test the local project directory, just change it to a forward slash. |
 | csv_file | This is the csv file containing the addresses to be used during testing. It is located in **cypress/fixtures**, and must follow the rules outlined at the top of this documentation. There is one included in this repo, which is the one set by default. |
 | expected_entries | This is the number of rows/addresses you supply in the csv file. It might seem silly to put this number here when the app can (and will) tell you exactly how many rows there are, but Cypress does not scan the csv so you need to tell it how many you are expecting. This number **must** be greater than 1. If you put 0 or 1 in here, the test will fail. |
@@ -234,7 +232,7 @@ Debug mode (Step 3) is optional, but it will show additional errors in the conso
 
 That concludes the documentation in this README. Please let me know if you have any questions or would like any clarifications or detailed explanations on anything presented here.
 
-The temporary production environment and my personal API key will remain active for at least another several weeks, and this repo will be updated again once those are no longer available.
+The temporary production environment will remain active for a little while, and this repo will be updated again once that is no longer available.
 
 ----
 
